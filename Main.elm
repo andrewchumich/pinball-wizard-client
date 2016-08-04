@@ -55,7 +55,9 @@ update msg {input, currentScore} =
       (Model input (decodeScore score), Cmd.none)
 
     Send ->
-      (Model "" currentScore, WebSocket.send echoServer input)
+      -- pre-populate the model with the send username string
+      -- the next NewScore may overwrite it
+      (Model "" (Score currentScore.score input), WebSocket.send echoServer input)
 
 -- SUBSCRIPTIONS
 
