@@ -1,7 +1,9 @@
 import Html exposing (..)
 import Html.App as Html
 import Html.Events exposing (..)
+import Html.Attributes exposing (..)
 import WebSocket
+import Debug exposing (..)
 import Json.Decode exposing (Decoder, decodeString, int, string, object2, (:=))
 
 main =
@@ -15,7 +17,7 @@ main =
 
 echoServer : String
 echoServer =
-  "ws://localhost:3000"
+  "ws://localhost:3000/live"
 
 type alias Score = 
   { score : Int
@@ -25,7 +27,7 @@ type alias Score =
 -- MODEL
 
 type alias Model =
-  { input : String 
+  { userInput : String 
   , currentScore : Score
   }
 
@@ -41,23 +43,21 @@ init =
 
 type Msg
   = NewScore String
-  | Input String
-  | Send
+  | UserInput String
+  | SetUser
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
-update msg {input, currentScore} =
+update msg {userInput, currentScore} =
   case msg of
-    Input newInput ->
-      (Model newInput currentScore, Cmd.none)
+    UserInput newUserInput ->
+      (Model newUserInput currentScore, Cmd.none)
 
     NewScore score ->
-      (Model input (decodeScore score), Cmd.none)
+      (Model userInput (decodeScore score), Cmd.none)
 
-    Send ->
-      -- pre-populate the model with the send username string
-      -- the next NewScore may overwrite it
-      (Model "" (Score currentScore.score input), WebSocket.send echoServer input)
+    SetUser ->
+      (Model userInput (Score currentScore.score userInput), WebSocket.send echoServer userInput)
 
 -- SUBSCRIPTIONS
 
@@ -73,8 +73,8 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
   div []
-    [ input [onInput Input] []
-    , button [onClick Send] [text "Send"]
+    [ input [onInput UserInput, value model.userInput] []
+    , button [onClick SetUser] [text "Set User"]
     , div [] [viewScore model.currentScore]
     ]
 
